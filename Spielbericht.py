@@ -1,6 +1,6 @@
 import PyPDF2
 import openpyxl
-version = '''Version 0.1\nby Jonas Eppard'''
+version = '''Version 0.1'''
 
 class manschaft():
     def __init__(self, name, file):
