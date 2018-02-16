@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.3'''
+version = '''Version 0.4'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -43,9 +43,11 @@ class manschaft():
                 while (rawText[i].isalpha() and not rawText[i + 1].isupper()) or rawText[i] == ' ':
                     spieler_name += rawText[i]
                     i += 1
+                spieler_name += rawText[i]
                 self.trainer.append(spieler(spieler_name, chr(ord('A')+numTrainer)))
                 numTrainer += 1
             elif (rawText[i].isalpha() and not rawText[i + 1].isupper()):
+                debug = rawText[i-2:]
                 if rawText[i-2].isnumeric():
                     number = int(rawText[i-2:i])
                 else:
@@ -131,6 +133,7 @@ def fileSchreiben():
             return
         else:
             gast = Manschaften_kurz[gast]
+    sheet['A2'] = 'Aufstellung vom ' + input('Datum?')
     heimManschaft = Manschaften[heim]
     gastManschaft = Manschaften[gast]
     wb = openpyxl.load_workbook('Mannschaftsliste_MUSTER.xlsx')
@@ -144,7 +147,7 @@ def fileSchreiben():
         sheet['D' + str(7+1)] = 'TW'
     for i in range(0, len(heimManschaft.players)):
         sheet['B' + str(10 + i)] = heimManschaft.players[i].name
-        sheet['B' + str(10+i)] = heimManschaft.players[i].number
+        sheet['A' + str(10+i)] = heimManschaft.players[i].number
     for i in range(0, len(heimManschaft.trainer)):
         sheet['B' + str(27 + i)] = heimManschaft.trainer[i].name
     for i in range(0, len(gastManschaft.torwart)):
@@ -174,6 +177,13 @@ except:
     Manschaften = {}
     Manschaften_kurz = {}
 
+print('Help(h)')
+print('Quit(q)')
+print('Bogen kreieren(b)')
+print('Datei lesen(d)')
+print('Kürzel liste(k)')
+print('Nummer ändern(n)')
+print('Manschaftsliste(m)')
 while True:
     cmd = input('->')
     if cmd == 'q':
@@ -199,7 +209,10 @@ while True:
         for each in akt_manschaft.torwart:
             print('{:>3}|{:20}|TW'.format(each.number, each.name))
         for each in akt_manschaft.players:
-            print('{:>3}|{:20}|'.format(each.number, each.name))
+            print('{:>3}|{:30}|'.format(each.number, each.name))
+        print('-'*35)
+        for each in akt_manschaft.trainer:
+            print('{:>3}|{:30}|'.format(each.number, each.name))
     elif cmd == 'n':
         akt_manschaft = input('Von welcher Manschaft ist der Spieler bei dem sie die Nummer ändern wollen?')
         if akt_manschaft not in Manschaften.keys():
