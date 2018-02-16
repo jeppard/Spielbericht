@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.4'''
+version = '''Version 0.5'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -93,7 +93,7 @@ def fileRead(file):
     pos_Ende = rawText.find('Nr.Name')
     name = rawText[pos_Heim + 6:pos_Ende]
     if name in Manschaften.keys():
-        akt = input('Wollen sie die Manschaft ' + str(name)+ ' aktualiesieren?(j/n)')
+        akt = input('Wollen sie die Manschaft ' + str(name)+ ' aktualisieren?(j/n)')
         if akt == 'j':
             del Manschaften[name]
             Manschaften.update({name:manschaft(name, file)})
@@ -105,7 +105,7 @@ def fileRead(file):
     pos_Ende = rawText.find('Nr.Name', pos_Gast)
     name = rawText[pos_Gast + 6:pos_Ende]
     if name in Manschaften.keys():
-        akt = input('Wollen sie die Manschaft '+ str(name) + ' aktualiesieren?(j/n)')
+        akt = input('Wollen sie die Manschaft '+ str(name) + ' aktualisieren?(j/n)')
         if akt == 'j':
             del Manschaften[name]
             Manschaften.update({name: manschaft(name, file)})
@@ -144,7 +144,7 @@ def fileSchreiben():
     for i in range(0, len(heimManschaft.torwart)):
         sheet['B' + str(7+i)] = heimManschaft.torwart[i].name
         sheet['A' + str(7+i)] = heimManschaft.torwart[i].number
-        sheet['D' + str(7+1)] = 'TW'
+        sheet['D' + str(7+i)] = 'TW'
     for i in range(0, len(heimManschaft.players)):
         sheet['B' + str(10 + i)] = heimManschaft.players[i].name
         sheet['A' + str(10+i)] = heimManschaft.players[i].number
@@ -153,7 +153,7 @@ def fileSchreiben():
     for i in range(0, len(gastManschaft.torwart)):
         sheet['G' + str(7+i)] = gastManschaft.torwart[i].name
         sheet['F' + str(7+i)] = gastManschaft.torwart[i].number
-        sheet['I' + str(7+1)] = 'TW'
+        sheet['I' + str(7+i)] = 'TW'
     for i in range(0, len(gastManschaft.players)):
         sheet['G' + str(10 + i)] = gastManschaft.players[i].name
         sheet['F' + str(10+i)] = gastManschaft.players[i].number
@@ -182,8 +182,9 @@ print('Quit(q)')
 print('Bogen kreieren(b)')
 print('Datei lesen(d)')
 print('Kürzel liste(k)')
-print('Nummer ändern(n)')
 print('Manschaftsliste(m)')
+print('Speichern(s)')
+print('Manschaften editieren(e)')
 while True:
     cmd = input('->')
     if cmd == 'q':
@@ -195,8 +196,72 @@ while True:
         print('Bogen kreieren(b)')
         print('Datei lesen(d)')
         print('Kürzel liste(k)')
-        print('Nummer ändern(n)')
         print('Manschaftsliste(m)')
+        print('Speicher(s)')
+        print('Manschaft editieren(e)')
+    elif cmd == 'e':
+        akt_manschaft = input('Welche Manschaft soll editiert werden?')
+        if akt_manschaft not in Manschaften.keys():
+            if akt_manschaft not in Manschaften_kurz.keys():
+                print('Manschaft nicht bekannt!')
+                continue
+            else:
+                akt_manschaft = Manschaften_kurz[akt_manschaft]
+        akt_manschaft = Manschaften[akt_manschaft]
+        print('Was willst du machen?')
+        auswahl = input('Spieler Löschen(l)\nSpilernummer ändern(n)\nSpieler hinzufügen(h)')
+        if auswahl == 'n':
+            name = input('Wie heißt der Spieler?')
+            new_number = int(input('Welche nummer soll der Spieler bekommen?'))
+            tempbool = False
+            for i in range(0, len(akt_manschaft.players)):
+                if akt_manschaft.players[i].name == name:
+                    akt_manschaft.changeNumberPlayer(akt_manschaft.players[i], new_number)
+                    tempbool = True
+            for i in range(0, len(akt_manschaft.torwart)):
+                if akt_manschaft.torwart[i].name == name:
+                    akt_manschaft.changeNumberPlayer(akt_manschaft.torwart[i], new_number)
+                    tempbool = True
+            if tempbool:
+                print('Erfolgreich Nummer von', name, 'auf', new_number, 'gesetzt.')
+            else:
+                print('Spieler nicht gefunden!')
+        elif auswahl == 'l':
+            name = input('Wie heißt der Spieler?')
+            tempbool = False
+            for i in range(0, len(akt_manschaft.players)):
+                if akt_manschaft.players[i].name == name:
+                    akt_manschaft.players.remove(akt_manschaft.players[i])
+                    tempbool = True
+            for i in range(0, len(akt_manschaft.torwart)):
+                if akt_manschaft.torwart[i].name == name:
+                    akt_manschaft.torwart.remove(akt_manschaft.torwart[i])
+                    tempbool = True
+            if tempbool:
+                print('Erfolgreich Spieler', name, 'entfernt.')
+            else:
+                print('Spieler nicht gefunden!')
+        elif auswahl == 'h':
+            name = input('Spielername?')
+            nummer = input('Spielernummer?')
+            if len(nummer) > 2:
+                print('Ungültige Nummer\nNummer darf maximal 2stellig sein')
+            elif nummer in ['A', 'B', 'C', 'D']:
+                akt_manschaft.trainer.append(spieler(name, nummer))
+                akt_manschaft.trainer.sort(key=operator.attrgetter('number'))
+            elif nummer.isnumeric():
+                nummer = int(nummer)
+                if nummer in [1, 12, 16]:
+                    akt_manschaft.torwart.append(spieler(name, nummer))
+                    akt_manschaft.torwart.sort(key=operator.attrgetter('number'))
+                else:
+                    akt_manschaft.players.append(spieler(name, nummer))
+                    akt_manschaft.players.sort(key=operator.attrgetter('number'))
+            else:
+                print('Ungültige Nummer')
+    elif cmd == 's':
+        pickle.dump(Manschaften, open('save.p', 'wb'))
+        pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
     elif cmd == 'm':
         akt_manschaft = input('Von welcher Manschaft wollen Sie die Manschaftsliste?')
         if akt_manschaft not in Manschaften.keys():
@@ -213,30 +278,6 @@ while True:
         print('-'*35)
         for each in akt_manschaft.trainer:
             print('{:>3}|{:30}|'.format(each.number, each.name))
-    elif cmd == 'n':
-        akt_manschaft = input('Von welcher Manschaft ist der Spieler bei dem sie die Nummer ändern wollen?')
-        if akt_manschaft not in Manschaften.keys():
-            if akt_manschaft not in Manschaften_kurz.keys():
-                print('Manschaft nicht bekannt!')
-                continue
-            else:
-                akt_manschaft = Manschaften_kurz[akt_manschaft]
-        akt_manschaft = Manschaften[akt_manschaft]
-        name = input('Wie heißt der Spieler?')
-        new_number = int(input('Welche nummer soll der Spieler bekommen?'))
-        tempbool = False
-        for i in range(0, len(akt_manschaft.players)):
-            if akt_manschaft.players[i].name == name:
-                akt_manschaft.changeNumberPlayer(akt_manschaft.players[i], new_number)
-                tempbool = True
-        for i in range(0, len(akt_manschaft.torwart)):
-            if akt_manschaft.torwart[i].name == name:
-                akt_manschaft.changeNumberPlayer(akt_manschaft.torwart[i], new_number)
-                tempbool = True
-        if tempbool:
-            print('Erfolgreich Nummer von', name, 'auf', new_number, 'gesetzt.')
-        else:
-            print('Spieler nicht gefunden!')
     elif cmd == 'k':
         for each in Manschaften_kurz.keys():
             print(each)
