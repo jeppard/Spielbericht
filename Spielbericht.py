@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.8'''
+version = '''Version 0.9'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -398,7 +398,7 @@ while True:
                 akt_manschaft = Manschaften_kurz[akt_manschaft]
         akt_manschaft = Manschaften[akt_manschaft]
         for each in akt_manschaft.torwart:
-            print('{:>3}|{:20}|TW'.format(each.number, each.name))
+            print('{:>3}|{:30}|TW'.format(each.number, each.name))
         for each in akt_manschaft.players:
             print('{:>3}|{:30}|'.format(each.number, each.name))
         print('-'*35)
