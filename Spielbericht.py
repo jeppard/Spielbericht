@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.6'''
+version = '''Version 0.7'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -57,7 +57,11 @@ class manschaft():
                 if rawText[i-2].isnumeric():
                     number = int(rawText[i-2:i])
                 else:
-                    number = int(rawText[i-1])
+                    if not rawText[i-1].isnumeric():
+                        print('Manschaft Fehlerhaft')
+                        number = 100
+                    else:
+                        number = int(rawText[i-1])
                 spieler_name = ''
                 while (rawText[i].isalpha() and not rawText[i + 1].isupper()) or rawText[i] == ' ':
                     spieler_name += rawText[i]
@@ -73,6 +77,9 @@ class manschaft():
                 self.players.remove(each)
                 self.torwart.append(each)
                 self.torwart.sort(key=operator.attrgetter('number'))
+            elif each.number == 100:
+                self.players.remove(each)
+                self.trainer.append(spieler(each.name[1:], each.name[0]))
     def changeNumberPlayer(self, player, number):
         if not (player in self.players or self.torwart): return False
         oldNumber = player.number
@@ -265,7 +272,7 @@ while True:
             Manschaften[name].name = name
             Manschaften[name].spielklasse = spielklasse
     elif cmd == 'l':
-        akt_manschaft = input('Welche Manschaft soll editiert werden?')
+        akt_manschaft = input('Welche Manschaft soll gelöscht werden?')
         kuerzel = input('Kürzel der Manschaft?')
         if akt_manschaft not in Manschaften.keys():
             if akt_manschaft not in Manschaften_kurz.keys():
@@ -290,18 +297,42 @@ while True:
                 akt_manschaft = Manschaften_kurz[akt_manschaft]
         akt_manschaft = Manschaften[akt_manschaft]
         print('Was willst du machen?')
-        auswahl = input('Spieler Löschen(l)\nSpilernummer ändern(n)\nSpieler hinzufügen(h)')
+        auswahl = input('Spieler Löschen(l)\nSpilernummer ändern(n)\nSpieler hinzufügen(h)\nSpielername ändern(ä)')
         if auswahl == 'n':
             name = input('Wie heißt der Spieler?')
-            new_number = int(input('Welche nummer soll der Spieler bekommen?'))
+            new_number = input('Welche nummer soll der Spieler bekommen?')
             tempbool = False
             for i in range(0, len(akt_manschaft.players)):
                 if akt_manschaft.players[i].name == name:
-                    akt_manschaft.changeNumberPlayer(akt_manschaft.players[i], new_number)
+                    akt_manschaft.changeNumberPlayer(akt_manschaft.players[i], int(new_number))
                     tempbool = True
             for i in range(0, len(akt_manschaft.torwart)):
                 if akt_manschaft.torwart[i].name == name:
-                    akt_manschaft.changeNumberPlayer(akt_manschaft.torwart[i], new_number)
+                    akt_manschaft.changeNumberPlayer(akt_manschaft.torwart[i], int(new_number))
+                    tempbool = True
+            for i in range(0, len(akt_manschaft.trainer)):
+                if akt_manschaft.torwart[i].name == name:
+                    akt_manschaft.changeNumberPlayer(akt_manschaft.trainer[i], new_number)
+                    tempbool = True
+            if tempbool:
+                print('Erfolgreich Nummer von', name, 'auf', new_number, 'gesetzt.')
+            else:
+                print('Spieler nicht gefunden!')
+        elif auswahl == 'ä':
+            name = input('Wie heißt der Spieler?')
+            new_name = input('Welche Namen soll der Spieler bekommen?')
+            tempbool = False
+            for i in range(0, len(akt_manschaft.players)):
+                if akt_manschaft.players[i].name == name:
+                    akt_manschaft.players[i].name = new_name
+                    tempbool = True
+            for i in range(0, len(akt_manschaft.torwart)):
+                if akt_manschaft.torwart[i].name == name:
+                    akt_manschaft.torwart[i].name = new_name
+                    tempbool = True
+            for i in range(0, len(akt_manschaft.trainer)):
+                if akt_manschaft.trainer[i].name == name:
+                    akt_manschaft.trainer[i].name = new_name
                     tempbool = True
             if tempbool:
                 print('Erfolgreich Nummer von', name, 'auf', new_number, 'gesetzt.')
