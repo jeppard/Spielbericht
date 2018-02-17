@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.7'''
+version = '''Version 0.8'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -81,17 +81,31 @@ class manschaft():
                 self.players.remove(each)
                 self.trainer.append(spieler(each.name[1:], each.name[0]))
     def changeNumberPlayer(self, player, number):
-        if not (player in self.players or self.torwart): return False
+        if not (player in self.players or self.torwart or self.trainer): return False
         oldNumber = player.number
         player.setNumber(number)
-        if number not in [1, 12, 16]:
-            self.players.sort(key=operator.attrgetter('number'))
-        else:
+        if number not in [1, 12, 16] or not number.isalpha:
             if oldNumber in [1, 12, 16]:
                 self.torwart.remove(player)
-            else:
+                self.players.append(player)
+            elif oldNumber.isaplha():
+                self.trainer.remove(player)
+                self.players.append(player)
+            self.players.sort(key=operator.attrgetter('number'))
+        elif number.isalpha():
+            if oldNumber in [1, 12, 16]:
+                self.torwart.remove(player)
+                self.trainer.append(player)
+            elif oldNumber.isnumeric():
                 self.players.remove(player)
-            if not (player in self.torwart):
+                self.trainer.append(player)
+            self.trainer.sort(key=operator.attrgetter('number'))
+        else:
+            if oldNumber.isaplha:
+                self.trainer.remove(player)
+                self.torwart.append(player)
+            elif oldNumber.isnumeric() and oldNumber not in [1, 12, 16]:
+                self.players.remove(player)
                 self.torwart.append(player)
             self.torwart.sort(key=operator.attrgetter('number'))
         return True
