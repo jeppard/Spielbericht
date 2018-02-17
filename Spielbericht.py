@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.5'''
+version = '''Version 0.6'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -13,7 +13,13 @@ class spieler():
         self.number = number
 
 class manschaft():
-    def __init__(self, name, file):
+    def __init__(self):
+        self.name = None
+        self.spielklasse = None
+        self.players = []
+        self.trainer = []
+        self.torwart = []
+    def read(self, name, file):
         self.name = name
         pdfFile = open(file, 'rb')
         pdfReader = PyPDF2.PdfFileReader(pdfFile)
@@ -92,13 +98,25 @@ def fileRead(file):
     pos_Heim = rawText.find('Heim: ')
     pos_Ende = rawText.find('Nr.Name')
     name = rawText[pos_Heim + 6:pos_Ende]
+    pageOne = pdfReader.getPage(0)
+    p1 = pageOne.extractText()
+    start = p1.find('Spielklasse') + 11
+    ende = p1.find('Spiel/Datum')
+    spielklasse = p1[start:ende]
     if name in Manschaften.keys():
-        akt = input('Wollen sie die Manschaft ' + str(name)+ ' aktualisieren?(j/n)')
-        if akt == 'j':
-            del Manschaften[name]
-            Manschaften.update({name:manschaft(name, file)})
+        if spielklasse == Manschaften[name].spielklasse:
+            akt = input('Wollen sie die Manschaft ' + str(name)+ ' aktualisieren?(j/n)')
+            if akt == 'j':
+                del Manschaften[name]
+                Manschaften.update({name:manschaft()})
+                Manschaften[name].read(name, file)
+        else:
+            Manschaften.update({name: manschaft()})
+            Manschaften[name].read(name, file)
+            Manschaften_kurz.update({input('Kürzel für Manschaft: ' + str(name)): name})
     else:
-        Manschaften.update({name: manschaft(name, file)})
+        Manschaften.update({name: manschaft()})
+        Manschaften[name].read(name, file)
         Manschaften_kurz.update({input('Kürzel für Manschaft: '+ str( name)): name})
 
     pos_Gast = rawText.find('Gast: ')
@@ -108,10 +126,18 @@ def fileRead(file):
         akt = input('Wollen sie die Manschaft '+ str(name) + ' aktualisieren?(j/n)')
         if akt == 'j':
             del Manschaften[name]
-            Manschaften.update({name: manschaft(name, file)})
+            Manschaften.update({name: manschaft()})
+            Manschaften[name].read(name, file)
     else:
-        Manschaften.update({name: manschaft(name, file)})
-        Manschaften_kurz.update({input('Kürzel für Manschaft: ' + str(name)): name})
+        while True:
+            kuerzel = input('Kürzel für Manschaft: ' + str(name))
+            if kuerzel in Manschaften_kurz:
+                print('Kürzel schon vorhanden!')
+            else:
+                Manschaften_kurz.update({kuerzel: name})
+                Manschaften.update({name: manschaft()})
+                Manschaften[name].read(name, file)
+                break
 
 
 def fileSchreiben():
@@ -133,7 +159,6 @@ def fileSchreiben():
             return
         else:
             gast = Manschaften_kurz[gast]
-    sheet['A2'] = 'Aufstellung vom ' + input('Datum?')
     heimManschaft = Manschaften[heim]
     gastManschaft = Manschaften[gast]
     wb = openpyxl.load_workbook('Mannschaftsliste_MUSTER.xlsx')
@@ -141,6 +166,7 @@ def fileSchreiben():
     sheet['A1'] = heimManschaft.spielklasse
     sheet['A3'] = heimManschaft.name
     sheet['F3'] = gastManschaft.name
+    sheet['A2'] = 'Aufstellung vom ' + input('Datum?')
     for i in range(0, len(heimManschaft.torwart)):
         sheet['B' + str(7+i)] = heimManschaft.torwart[i].name
         sheet['A' + str(7+i)] = heimManschaft.torwart[i].number
@@ -185,6 +211,9 @@ print('Kürzel liste(k)')
 print('Manschaftsliste(m)')
 print('Speichern(s)')
 print('Manschaften editieren(e)')
+print('Manschaften löschen(l)')
+print('Manschaft hinzufügen(h)    (Manuell)')
+print('Kürzel ändern(ä)')
 while True:
     cmd = input('->')
     if cmd == 'q':
@@ -199,6 +228,58 @@ while True:
         print('Manschaftsliste(m)')
         print('Speicher(s)')
         print('Manschaft editieren(e)')
+        print('Manschaften löschen(l)')
+        print('Manschaft hinzufügen(h)    (Manuell)')
+        print('Kürzel ändern(ä)')
+    elif cmd == 'ä':
+        akt_manschaft = input('Von welcher Manschaft soll das kürzel geändert werden?')
+        kuerzel = input('Altes Kürzel der Manschaft?')
+        if akt_manschaft not in Manschaften.keys():
+            if akt_manschaft not in Manschaften_kurz.keys():
+                print('Manschaft nicht bekannt!')
+                continue
+            else:
+                akt_manschaft = Manschaften_kurz[akt_manschaft]
+        if akt_manschaft != Manschaften_kurz[kuerzel]:
+            print('Kürzel Falsch!')
+            continue
+        new_kuerzel = input('Neues Kürzel?')
+        if new_kuerzel in Manschaften_kurz.keys():
+            print('Kürzel schon vorhanden!')
+        else:
+            del Manschaften_kurz[name]
+            Manschaften_kurz.update({new_kuerzel:akt_manschaft})
+            print('Erfolgreich Kürzel der Manschschaft', akt_manschaft, 'von', kuerzel, 'auf', new_kuerzel)
+    elif cmd == 'h':
+        name = input('Manschaftname?')
+        kuerzel = input('Kürzel?')
+        if kuerzel in Manschaften_kurz.keys():
+            print('Kürzel schon vergeben!')
+            continue
+        spielklasse = input('Spielklasse?')
+        print('Wollen sie wirklich die Manschaft', name, 'mit dem Kürzel', kuerzel, 'in der Spielklasse', spielklasse, 'kreieren',end='')
+        temp =input('(j/n)')
+        if temp =='j':
+            Manschaften_kurz.update({kuerzel:name})
+            Manschaften.update({name:manschaft()})
+            Manschaften[name].name = name
+            Manschaften[name].spielklasse = spielklasse
+    elif cmd == 'l':
+        akt_manschaft = input('Welche Manschaft soll editiert werden?')
+        kuerzel = input('Kürzel der Manschaft?')
+        if akt_manschaft not in Manschaften.keys():
+            if akt_manschaft not in Manschaften_kurz.keys():
+                print('Manschaft nicht bekannt!')
+                continue
+            else:
+                akt_manschaft = Manschaften_kurz[akt_manschaft]
+        if akt_manschaft != Manschaften_kurz[kuerzel]:
+            print('Kürzel Falsch!')
+            continue
+        temp = input('Wollen sie wirklich die Manschaft '+str(akt_manschaft.name)+' löschen(j/n)')
+        if temp == 'j':
+            del Manschaften_kurz[kuerzel]
+            del Manschaften[akt_manschaft]
     elif cmd == 'e':
         akt_manschaft = input('Welche Manschaft soll editiert werden?')
         if akt_manschaft not in Manschaften.keys():
