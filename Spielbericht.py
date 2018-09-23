@@ -3,8 +3,9 @@ import openpyxl
 import operator
 import pickle
 import easygui
+import os
 
-version = '''Version 2.0'''
+version = '''Version 2.1'''
 title = 'Spielbericht ' + version
 
 
@@ -234,7 +235,8 @@ while True:
     if len(Manschaften_kurz) == 0:
         cmd = easygui.choicebox('Was wollen Sie machen?', title=title,
                                 choices=['Quit', 'Datei lesen', 'Manschaft hinzufügen    (Manuell)'])
-    cmd = easygui.choicebox('Was wollen Sie machen?', title=title, choices=choices)
+    else:
+        cmd = easygui.choicebox('Was wollen Sie machen?', title=title, choices=choices)
     if cmd == 'Quit':
         easygui.msgbox('Goodbye!', title=title)
         break
@@ -395,7 +397,14 @@ while True:
     elif cmd == 'Bogen kreiren':
         fileSchreiben()
     elif cmd == 'Datei lesen':
-        datei = easygui.enterbox('Dateiname?', title=title)
+        dirs = os.listdir()
+        for i in dirs[:]:
+            try:
+                if not i[-4:] == '.pdf':
+                    dirs.remove(i)
+            except:
+                dirs.remove(i)
+        datei = easygui.choicebox('Dateiname?', title=title, choices=dirs)
         if datei[-4:] != '.pdf':
             datei += '.pdf'
         fileRead(datei)
