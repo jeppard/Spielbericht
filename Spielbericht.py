@@ -3,7 +3,7 @@ import openpyxl
 import operator
 import pickle
 
-version = '''Version 0.9'''
+version = '''Version 1.0'''
 
 class spieler():
     def __init__(self, name, number=None):
@@ -49,7 +49,8 @@ class manschaft():
                 while (rawText[i].isalpha() and not rawText[i + 1].isupper()) or rawText[i] == ' ':
                     spieler_name += rawText[i]
                     i += 1
-                spieler_name += rawText[i]
+                if rawText[i].isalpha():
+                    spieler_name += rawText[i]
                 self.trainer.append(spieler(spieler_name, chr(ord('A')+numTrainer)))
                 numTrainer += 1
             elif (rawText[i].isalpha() and not rawText[i + 1].isupper()):
@@ -164,6 +165,7 @@ def fileRead(file):
 def fileSchreiben():
     global Manschaften, Manschaften_kurz
     heim = input('Heimmanschaft?')
+    kurzHeim = heim
     if heim == '':
         heim = 'HSG Böblingen/Sindelfingen'
         print('Heim automatisch auf', heim, 'gesetzt')
@@ -182,12 +184,14 @@ def fileSchreiben():
             gast = Manschaften_kurz[gast]
     heimManschaft = Manschaften[heim]
     gastManschaft = Manschaften[gast]
+    datum = input('Datum?')
     wb = openpyxl.load_workbook('Mannschaftsliste_MUSTER.xlsx')
     sheet = wb[wb.sheetnames[0]]
+    sheet.title = kurzHeim + ' am ' + datum
     sheet['A1'] = heimManschaft.spielklasse
     sheet['A3'] = heimManschaft.name
     sheet['F3'] = gastManschaft.name
-    sheet['A2'] = 'Aufstellung vom ' + input('Datum?')
+    sheet['A2'] = 'Aufstellung vom ' + datum
     for i in range(0, len(heimManschaft.torwart)):
         sheet['B' + str(7+i)] = heimManschaft.torwart[i].name
         sheet['A' + str(7+i)] = heimManschaft.torwart[i].number
@@ -416,6 +420,8 @@ while True:
         if datei[-4:] != '.pdf':
             datei += '.pdf'
         fileRead(datei)
+        pickle.dump(Manschaften, open('save.p', 'wb'))
+        pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
     else:
         print('Befehl unbekannt!\nh für Hilfe')
 
