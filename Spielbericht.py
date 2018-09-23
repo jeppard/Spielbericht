@@ -2,15 +2,20 @@ import PyPDF2
 import openpyxl
 import operator
 import pickle
+import easygui
 
-version = '''Version 1.0'''
+version = '''Version 2.0'''
+title = 'Spielbericht ' + version
+
 
 class spieler():
     def __init__(self, name, number=None):
         self.name = name
         self.number = number
+
     def setNumber(self, number):
         self.number = number
+
 
 class manschaft():
     def __init__(self):
@@ -19,6 +24,7 @@ class manschaft():
         self.players = []
         self.trainer = []
         self.torwart = []
+
     def read(self, name, file):
         self.name = name
         pdfFile = open(file, 'rb')
@@ -51,27 +57,27 @@ class manschaft():
                     i += 1
                 if rawText[i].isalpha():
                     spieler_name += rawText[i]
-                self.trainer.append(spieler(spieler_name, chr(ord('A')+numTrainer)))
+                self.trainer.append(spieler(spieler_name, chr(ord('A') + numTrainer)))
                 numTrainer += 1
             elif (rawText[i].isalpha() and not rawText[i + 1].isupper()):
-                debug = rawText[i-2:]
-                if rawText[i-2].isnumeric():
-                    number = int(rawText[i-2:i])
+                debug = rawText[i - 2:]
+                if rawText[i - 2].isnumeric():
+                    number = int(rawText[i - 2:i])
                 else:
-                    if not rawText[i-1].isnumeric():
-                        print('Manschaft Fehlerhaft')
+                    if not rawText[i - 1].isnumeric():
+                        easygui.msgbox('Manschaft Fehlerhaft')
                         number = 100
                     else:
-                        number = int(rawText[i-1])
+                        number = int(rawText[i - 1])
                 spieler_name = ''
                 while (rawText[i].isalpha() and not rawText[i + 1].isupper()) or rawText[i] == ' ':
                     spieler_name += rawText[i]
                     i += 1
                 self.players.append(spieler(spieler_name, number))
             i += 1
-        for i in range(0, len(self.players)-1):
-            if self.players[i].number > self.players[i+1].number:
-                for u in range(0, i+1):
+        for i in range(0, len(self.players) - 1):
+            if self.players[i].number > self.players[i + 1].number:
+                for u in range(0, i + 1):
                     self.players[u].number = self.players[u].number % 10
         for each in self.players[:]:
             if each.number in [1, 12, 16]:
@@ -81,15 +87,16 @@ class manschaft():
             elif each.number == 100:
                 self.players.remove(each)
                 self.trainer.append(spieler(each.name[1:], each.name[0]))
+
     def changeNumberPlayer(self, player, number):
         if not (player in self.players or self.torwart or self.trainer): return False
         oldNumber = player.number
         player.setNumber(number)
-        if number not in [1, 12, 16] or not number.isalpha:
+        if number not in [1, 12, 16] or not number.isalpha():
             if oldNumber in [1, 12, 16]:
                 self.torwart.remove(player)
                 self.players.append(player)
-            elif oldNumber.isaplha():
+            elif str(oldNumber).isalpha():
                 self.trainer.remove(player)
                 self.players.append(player)
             self.players.sort(key=operator.attrgetter('number'))
@@ -97,19 +104,20 @@ class manschaft():
             if oldNumber in [1, 12, 16]:
                 self.torwart.remove(player)
                 self.trainer.append(player)
-            elif oldNumber.isnumeric():
+            elif str(oldNumber).isnumeric():
                 self.players.remove(player)
                 self.trainer.append(player)
             self.trainer.sort(key=operator.attrgetter('number'))
         else:
-            if oldNumber.isaplha:
+            if str(oldNumber).isaplha():
                 self.trainer.remove(player)
                 self.torwart.append(player)
-            elif oldNumber.isnumeric() and oldNumber not in [1, 12, 16]:
+            elif str(oldNumber).isnumeric() and oldNumber not in [1, 12, 16]:
                 self.players.remove(player)
                 self.torwart.append(player)
             self.torwart.sort(key=operator.attrgetter('number'))
         return True
+
 
 def fileRead(file):
     global Manschaften_kurz, Manschaften
@@ -127,34 +135,36 @@ def fileRead(file):
     spielklasse = p1[start:ende]
     if name in Manschaften.keys():
         if spielklasse == Manschaften[name].spielklasse:
-            akt = input('Wollen sie die Manschaft ' + str(name)+ ' aktualisieren?(j/n)')
-            if akt == 'j':
+            akt = easygui.buttonbox('Wollen sie die Manschaft ' + str(name) + ' aktualisieren?', title=title,
+                                    choices=['Yes', 'No'])
+            if akt == 'Yes':
                 del Manschaften[name]
-                Manschaften.update({name:manschaft()})
+                Manschaften.update({name: manschaft()})
                 Manschaften[name].read(name, file)
         else:
             Manschaften.update({name: manschaft()})
             Manschaften[name].read(name, file)
-            Manschaften_kurz.update({input('Kürzel für Manschaft: ' + str(name)): name})
+            Manschaften_kurz.update({easygui.enterbox('Kürzel für Manschaft: ' + str(name), title=title): name})
     else:
         Manschaften.update({name: manschaft()})
         Manschaften[name].read(name, file)
-        Manschaften_kurz.update({input('Kürzel für Manschaft: '+ str( name)): name})
+        Manschaften_kurz.update({easygui.enterbox('Kürzel für Manschaft: ' + str(name), title=title): name})
 
     pos_Gast = rawText.find('Gast: ')
     pos_Ende = rawText.find('Nr.Name', pos_Gast)
     name = rawText[pos_Gast + 6:pos_Ende]
     if name in Manschaften.keys():
-        akt = input('Wollen sie die Manschaft '+ str(name) + ' aktualisieren?(j/n)')
-        if akt == 'j':
+        akt = easygui.buttonbox('Wollen sie die Manschaft ' + str(name) + ' aktualisieren?', title=title,
+                                choices=['Yes', 'No'])
+        if akt == 'Yes':
             del Manschaften[name]
             Manschaften.update({name: manschaft()})
             Manschaften[name].read(name, file)
     else:
         while True:
-            kuerzel = input('Kürzel für Manschaft: ' + str(name))
+            kuerzel = easygui.enterbox('Kürzel für Manschaft: ' + str(name), title=title)
             if kuerzel in Manschaften_kurz:
-                print('Kürzel schon vorhanden!')
+                easygui.msgbox('Kürzel schon vorhanden!')
             else:
                 Manschaften_kurz.update({kuerzel: name})
                 Manschaften.update({name: manschaft()})
@@ -164,27 +174,14 @@ def fileRead(file):
 
 def fileSchreiben():
     global Manschaften, Manschaften_kurz
-    heim = input('Heimmanschaft?')
+    heim = easygui.choicebox('Heimmanschaft?', title=title, choices=list(Manschaften_kurz.keys()))
     kurzHeim = heim
-    if heim == '':
-        heim = 'HSG Böblingen/Sindelfingen'
-        print('Heim automatisch auf', heim, 'gesetzt')
-    if heim not in Manschaften.keys():
-        if heim not in Manschaften_kurz.keys():
-            print('Manschaft nicht bekannt!')
-            return
-        else:
-            heim = Manschaften_kurz[heim]
-    gast = input('Gastmanschaft?')
-    if gast not in Manschaften.keys():
-        if gast not in Manschaften_kurz.keys():
-            print('Manschaft nicht bekannt!')
-            return
-        else:
-            gast = Manschaften_kurz[gast]
+    heim = Manschaften_kurz[heim]
+    gast = easygui.choicebox('Gastmanschaft?', title=title, choices=list(Manschaften_kurz.keys()))
+    gast = Manschaften_kurz[gast]
     heimManschaft = Manschaften[heim]
     gastManschaft = Manschaften[gast]
-    datum = input('Datum?')
+    datum = easygui.enterbox('Datum?', title=title)
     wb = openpyxl.load_workbook('Mannschaftsliste_MUSTER.xlsx')
     sheet = wb[wb.sheetnames[0]]
     sheet.title = kurzHeim + ' am ' + datum
@@ -193,24 +190,25 @@ def fileSchreiben():
     sheet['F3'] = gastManschaft.name
     sheet['A2'] = 'Aufstellung vom ' + datum
     for i in range(0, len(heimManschaft.torwart)):
-        sheet['B' + str(7+i)] = heimManschaft.torwart[i].name
-        sheet['A' + str(7+i)] = heimManschaft.torwart[i].number
-        sheet['D' + str(7+i)] = 'TW'
+        sheet['B' + str(7 + i)] = heimManschaft.torwart[i].name
+        sheet['A' + str(7 + i)] = heimManschaft.torwart[i].number
+        sheet['D' + str(7 + i)] = 'TW'
     for i in range(0, len(heimManschaft.players)):
         sheet['B' + str(10 + i)] = heimManschaft.players[i].name
-        sheet['A' + str(10+i)] = heimManschaft.players[i].number
+        sheet['A' + str(10 + i)] = heimManschaft.players[i].number
     for i in range(0, len(heimManschaft.trainer)):
         sheet['B' + str(27 + i)] = heimManschaft.trainer[i].name
     for i in range(0, len(gastManschaft.torwart)):
-        sheet['G' + str(7+i)] = gastManschaft.torwart[i].name
-        sheet['F' + str(7+i)] = gastManschaft.torwart[i].number
-        sheet['I' + str(7+i)] = 'TW'
+        sheet['G' + str(7 + i)] = gastManschaft.torwart[i].name
+        sheet['F' + str(7 + i)] = gastManschaft.torwart[i].number
+        sheet['I' + str(7 + i)] = 'TW'
     for i in range(0, len(gastManschaft.players)):
         sheet['G' + str(10 + i)] = gastManschaft.players[i].name
-        sheet['F' + str(10+i)] = gastManschaft.players[i].number
+        sheet['F' + str(10 + i)] = gastManschaft.players[i].number
     for i in range(0, len(gastManschaft.trainer)):
         sheet['G' + str(27 + i)] = gastManschaft.trainer[i].name
-    datei = input('Dateiname:')
+    date = datum.split('.')
+    datei = easygui.enterbox('Dateiname:', title=title, default=kurzHeim + date[-1][2:] + date[1] + date[0])
     try:
         if datei[-5:0] != '.xlsx':
             datei += '.xlsx'
@@ -219,106 +217,82 @@ def fileSchreiben():
     wb.save(datei)
 
 
-print(version)
+print('Spielbericht', version)
 try:
     Manschaften = pickle.load(open('save.p', 'rb'))
     Manschaften_kurz = pickle.load(open('save2.p', 'rb'))
 except:
-    print('Manschaften konnten nicht geladen werden!')
+    easygui.msgbox('Manschaften konnten nicht geladen werden!')
     Manschaften = {}
     Manschaften_kurz = {}
 
-print('Help(h)')
-print('Quit(q)')
-print('Bogen kreieren(b)')
-print('Datei lesen(d)')
-print('Kürzel liste(k)')
-print('Manschaftsliste(m)')
-print('Speichern(s)')
-print('Manschaften editieren(e)')
-print('Manschaften löschen(l)')
-print('Manschaft hinzufügen(h)    (Manuell)')
-print('Kürzel ändern(ä)')
+choices = ['Quit', 'Bogen kreiren', 'Datei lesen', 'Kürzelliste anzeigen', 'Spielerliste einer Manschaft anzeigen',
+           'Speichern',
+           'Manschaft editieren', 'Manschaft löschen', 'Manschaft hinzufügen    (Manuell)', 'Kürzel ändern']
+
 while True:
-    cmd = input('->')
-    if cmd == 'q':
-        print('Godbye!')
+    if len(Manschaften_kurz) == 0:
+        cmd = easygui.choicebox('Was wollen Sie machen?', title=title,
+                                choices=['Quit', 'Datei lesen', 'Manschaft hinzufügen    (Manuell)'])
+    cmd = easygui.choicebox('Was wollen Sie machen?', title=title, choices=choices)
+    if cmd == 'Quit':
+        easygui.msgbox('Goodbye!', title=title)
         break
-    elif cmd == 'h':
-        print('Help(h)')
-        print('Quit(q)')
-        print('Bogen kreieren(b)')
-        print('Datei lesen(d)')
-        print('Kürzel liste(k)')
-        print('Manschaftsliste(m)')
-        print('Speicher(s)')
-        print('Manschaft editieren(e)')
-        print('Manschaften löschen(l)')
-        print('Manschaft hinzufügen(h)    (Manuell)')
-        print('Kürzel ändern(ä)')
-    elif cmd == 'ä':
-        akt_manschaft = input('Von welcher Manschaft soll das kürzel geändert werden?')
-        kuerzel = input('Altes Kürzel der Manschaft?')
-        if akt_manschaft not in Manschaften.keys():
-            if akt_manschaft not in Manschaften_kurz.keys():
-                print('Manschaft nicht bekannt!')
-                continue
-            else:
-                akt_manschaft = Manschaften_kurz[akt_manschaft]
-        if akt_manschaft != Manschaften_kurz[kuerzel]:
-            print('Kürzel Falsch!')
-            continue
-        new_kuerzel = input('Neues Kürzel?')
+    elif cmd == 'Kürzel ändern':
+        akt_manschaft = easygui.choicebox('Von welcher Manschaft soll das kürzel geändert werden?', title=title,
+                                          choices=list(Manschaften_kurz.keys()))
+        k = akt_manschaft
+        akt_manschaft = Manschaften_kurz[akt_manschaft]
+        new_kuerzel = easygui.enterbox('Neues Kürzel?', title=title)
         if new_kuerzel in Manschaften_kurz.keys():
-            print('Kürzel schon vorhanden!')
+            easygui.msgbox('Kürzel schon vorhanden! Kürzel wird nicht geändert!', title=title)
         else:
-            del Manschaften_kurz[name]
-            Manschaften_kurz.update({new_kuerzel:akt_manschaft})
-            print('Erfolgreich Kürzel der Manschschaft', akt_manschaft, 'von', kuerzel, 'auf', new_kuerzel)
-    elif cmd == 'h':
-        name = input('Manschaftname?')
-        kuerzel = input('Kürzel?')
+            del Manschaften_kurz[k]
+            Manschaften_kurz.update({new_kuerzel: akt_manschaft})
+            easygui.msgbox(
+                'Erfolgreich Kürzel der Manschschaft ' + str(akt_manschaft) + ' von ' + str(k) + ' auf ' + str(
+                    new_kuerzel))
+    elif cmd == 'Manschaft hinzufügen    (Manuell)':
+        name = easygui.enterbox('Manschaftname?', title=title)
+        kuerzel = easygui.enterbox('Kürzel?', title=title)
         if kuerzel in Manschaften_kurz.keys():
-            print('Kürzel schon vergeben!')
+            easygui.msgbox('Kürzel schon vergeben!', title=title)
             continue
-        spielklasse = input('Spielklasse?')
-        print('Wollen sie wirklich die Manschaft', name, 'mit dem Kürzel', kuerzel, 'in der Spielklasse', spielklasse, 'kreieren',end='')
-        temp =input('(j/n)')
-        if temp =='j':
-            Manschaften_kurz.update({kuerzel:name})
-            Manschaften.update({name:manschaft()})
+        spielklasse = easygui.enterbox('Spielklasse?', title=title)
+        temp = easygui.buttonbox(
+            'Wollen sie wirklich die Manschaft ' + name + ' mit dem Kürzel ' + kuerzel + ' in der Spielklasse ' + spielklasse + 'kreieren',
+            title=title, choices=['Yes', 'No'])
+        if temp == 'Yes':
+            Manschaften_kurz.update({kuerzel: name})
+            Manschaften.update({name: manschaft()})
             Manschaften[name].name = name
             Manschaften[name].spielklasse = spielklasse
-    elif cmd == 'l':
-        akt_manschaft = input('Welche Manschaft soll gelöscht werden?')
-        kuerzel = input('Kürzel der Manschaft?')
-        if akt_manschaft not in Manschaften.keys():
-            if akt_manschaft not in Manschaften_kurz.keys():
-                print('Manschaft nicht bekannt!')
-                continue
-            else:
-                akt_manschaft = Manschaften_kurz[akt_manschaft]
-        if akt_manschaft != Manschaften_kurz[kuerzel]:
-            print('Kürzel Falsch!')
-            continue
-        temp = input('Wollen sie wirklich die Manschaft '+str(akt_manschaft.name)+' löschen(j/n)')
-        if temp == 'j':
+            easygui.msgbox('Manschaft erfolgreich hinzugefügt!')
+            pickle.dump(Manschaften, open('save.p', 'wb'))
+            pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
+
+    elif cmd == 'Manschaft löschen':
+        akt_manschaft = easygui.choicebox('Welche Manschaft soll gelöscht werden?', title=title,
+                                          choices=list(Manschaften_kurz.keys()))
+        kuerzel = akt_manschaft
+        akt_manschaft = Manschaften_kurz[akt_manschaft]
+        temp = easygui.buttonbox('Wollen sie wirklich die Manschaft ' + str(akt_manschaft) + ' löschen?',
+                                 title=title, choices=['Yes', 'No'])
+        if temp == 'Yes':
             del Manschaften_kurz[kuerzel]
             del Manschaften[akt_manschaft]
-    elif cmd == 'e':
-        akt_manschaft = input('Welche Manschaft soll editiert werden?')
-        if akt_manschaft not in Manschaften.keys():
-            if akt_manschaft not in Manschaften_kurz.keys():
-                print('Manschaft nicht bekannt!')
-                continue
-            else:
-                akt_manschaft = Manschaften_kurz[akt_manschaft]
+    elif cmd == 'Manschaft editieren':
+        akt_manschaft = easygui.choicebox('Welche Manschaft soll editiert werden?', title=title,
+                                          choices=list(Manschaften_kurz.keys()))
+        akt_manschaft = Manschaften_kurz[akt_manschaft]
         akt_manschaft = Manschaften[akt_manschaft]
-        print('Was willst du machen?')
-        auswahl = input('Spieler Löschen(l)\nSpilernummer ändern(n)\nSpieler hinzufügen(h)\nSpielername ändern(ä)')
-        if auswahl == 'n':
-            name = input('Wie heißt der Spieler?')
-            new_number = input('Welche nummer soll der Spieler bekommen?')
+        auswahl = easygui.buttonbox('Was willst du machen?', title=title,
+                                    choices=['Spieler löschen', 'Spielernummer ändern',
+                                             'Spieler hinzufügen', 'Spielername ändern', 'Quit'])
+        if auswahl == 'Spielernummer ändern':
+            name = easygui.enterbox('Wie heißt der Spieler?', title=title)
+            new_number = easygui.integerbox('Welche nummer soll der Spieler bekommen?', title=title, lowerbound=1,
+                                            upperbound=99)
             tempbool = False
             for i in range(0, len(akt_manschaft.players)):
                 if akt_manschaft.players[i].name == name:
@@ -329,16 +303,16 @@ while True:
                     akt_manschaft.changeNumberPlayer(akt_manschaft.torwart[i], int(new_number))
                     tempbool = True
             for i in range(0, len(akt_manschaft.trainer)):
-                if akt_manschaft.torwart[i].name == name:
+                if akt_manschaft.trainer[i].name == name:
                     akt_manschaft.changeNumberPlayer(akt_manschaft.trainer[i], new_number)
                     tempbool = True
             if tempbool:
-                print('Erfolgreich Nummer von', name, 'auf', new_number, 'gesetzt.')
+                easygui.msgbox('Erfolgreich Nummer von ' + name + ' auf ' + str(new_number) + ' gesetzt.', title=title)
             else:
-                print('Spieler nicht gefunden!')
-        elif auswahl == 'ä':
-            name = input('Wie heißt der Spieler?')
-            new_name = input('Welche Namen soll der Spieler bekommen?')
+                easygui.msgbox('Spieler nicht gefunden!', title=title)
+        elif auswahl == 'Spielername ändern':
+            name = easygui.enterbox('Wie heißt der Spieler?', title=title)
+            new_name = easygui.enterbox('Welche Namen soll der Spieler bekommen?', title=title)
             tempbool = False
             for i in range(0, len(akt_manschaft.players)):
                 if akt_manschaft.players[i].name == name:
@@ -353,11 +327,11 @@ while True:
                     akt_manschaft.trainer[i].name = new_name
                     tempbool = True
             if tempbool:
-                print('Erfolgreich Nummer von', name, 'auf', new_number, 'gesetzt.')
+                easygui.msgbox('Erfolgreich Nummer von ' + name + 'auf' + new_name + ' gesetzt.', title=title)
             else:
-                print('Spieler nicht gefunden!')
-        elif auswahl == 'l':
-            name = input('Wie heißt der Spieler?')
+                easygui.msgbox('Spieler nicht gefunden!', title=title)
+        elif auswahl == 'Spieler löschen':
+            name = easygui.enterbox('Wie heißt der Spieler?', title=title)
             tempbool = False
             for i in range(0, len(akt_manschaft.players)):
                 if akt_manschaft.players[i].name == name:
@@ -368,15 +342,13 @@ while True:
                     akt_manschaft.torwart.remove(akt_manschaft.torwart[i])
                     tempbool = True
             if tempbool:
-                print('Erfolgreich Spieler', name, 'entfernt.')
+                easygui.msgbox('Erfolgreich Spieler' + name + 'entfernt.', title=title)
             else:
-                print('Spieler nicht gefunden!')
-        elif auswahl == 'h':
-            name = input('Spielername?')
-            nummer = input('Spielernummer?')
-            if len(nummer) > 2:
-                print('Ungültige Nummer\nNummer darf maximal 2stellig sein')
-            elif nummer in ['A', 'B', 'C', 'D']:
+                easygui.msgbox('Spieler nicht gefunden!', title=title)
+        elif auswahl == 'Spieler hinzufügen':
+            name = easygui.enterbox('Spielername?', title=title)
+            nummer = easygui.enterbox('Spielernummer?', title=title)
+            if nummer in ['A', 'B', 'C', 'D']:
                 akt_manschaft.trainer.append(spieler(name, nummer))
                 akt_manschaft.trainer.sort(key=operator.attrgetter('number'))
             elif nummer.isnumeric():
@@ -388,43 +360,47 @@ while True:
                     akt_manschaft.players.append(spieler(name, nummer))
                     akt_manschaft.players.sort(key=operator.attrgetter('number'))
             else:
-                print('Ungültige Nummer')
-    elif cmd == 's':
+                easygui.msgbox('Ungültige Nummer! Vorgang abgebrochen!', title=title)
+    elif cmd == 'Speichern':
         pickle.dump(Manschaften, open('save.p', 'wb'))
         pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
-    elif cmd == 'm':
-        akt_manschaft = input('Von welcher Manschaft wollen Sie die Manschaftsliste?')
-        if akt_manschaft not in Manschaften.keys():
-            if akt_manschaft not in Manschaften_kurz.keys():
-                print('Manschaft nicht bekannt!')
-                continue
-            else:
-                akt_manschaft = Manschaften_kurz[akt_manschaft]
+    elif cmd == 'Spielerliste einer Manschaft anzeigen':
+        akt_manschaft = easygui.choicebox('Welche Manschaft soll gelöscht werden?', title=title,
+                                          choices=list(Manschaften_kurz.keys()))
+        akt_manschaft = Manschaften_kurz[akt_manschaft]
         akt_manschaft = Manschaften[akt_manschaft]
+        ausgabe = ''
         for each in akt_manschaft.torwart:
-            print('{:>3}|{:30}|TW'.format(each.number, each.name))
+            ausgabe += '{:>3}|{:30}|TW'.format(each.number, each.name)
+            ausgabe += '\n'
         for each in akt_manschaft.players:
-            print('{:>3}|{:30}|'.format(each.number, each.name))
-        print('-'*35)
+            ausgabe += '{:>3}|{:30}|'.format(each.number, each.name)
+            ausgabe += '\n'
+        ausgabe += '-' * 35
+        ausgabe += '\n'
         for each in akt_manschaft.trainer:
-            print('{:>3}|{:30}|'.format(each.number, each.name))
-    elif cmd == 'k':
+            ausgabe += '{:>3}|{:30}|'.format(each.number, each.name)
+            ausgabe += '\n'
+        easygui.msgbox(ausgabe, title=title)
+    elif cmd == 'Kürzelliste anzeigen':
+        ausgabe = ''
         for each in Manschaften_kurz.keys():
-            print(each)
-            print(Manschaften_kurz[each])
-            print(Manschaften[Manschaften_kurz[each]].spielklasse, end='\n\n')
-    elif cmd == 'b':
+            ausgabe += each
+            ausgabe += '\n'
+            ausgabe += Manschaften_kurz[each]
+            ausgabe += '\n'
+            ausgabe += Manschaften[Manschaften_kurz[each]].spielklasse
+            ausgabe += '\n\n'
+        easygui.msgbox(ausgabe, title=title)
+    elif cmd == 'Bogen kreiren':
         fileSchreiben()
-    elif cmd == 'd':
-        datei = input('Dateiname?')
+    elif cmd == 'Datei lesen':
+        datei = easygui.enterbox('Dateiname?', title=title)
         if datei[-4:] != '.pdf':
             datei += '.pdf'
         fileRead(datei)
         pickle.dump(Manschaften, open('save.p', 'wb'))
         pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
-    else:
-        print('Befehl unbekannt!\nh für Hilfe')
-
 
 pickle.dump(Manschaften, open('save.p', 'wb'))
 pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
