@@ -29,14 +29,14 @@ class manschaft():
     def read(self, name, file):
         self.name = name
         pdfFile = open(file, 'rb')
-        pdfReader = PyPDF2.PdfFileReader(pdfFile)
-        pageObj = pdfReader.getPage(1)
-        pageOne = pdfReader.getPage(0)
-        p1 = pageOne.extractText()
+        pdfReader = PyPDF2.PdfReader(pdfFile)
+        pageObj = pdfReader.pages[1]
+        pageOne = pdfReader.pages[0]
+        p1 = pageOne.extract_text()
         start = p1.find('Spielklasse') + 11
         ende = p1.find('Spiel/Datum')
         self.spielklasse = p1[start:ende]
-        rawText = pageObj.extractText()
+        rawText = pageObj.extract_text()
         pos_Manschaft = rawText.find(name)
         self.players = []
         self.trainer = []
@@ -125,14 +125,14 @@ class manschaft():
 def fileRead(file):
     global Manschaften_kurz, Manschaften
     pdfFile = open(file, 'rb')
-    pdfReader = PyPDF2.PdfFileReader(pdfFile)
-    pageObj = pdfReader.getPage(1)
-    rawText = pageObj.extractText()
+    pdfReader = PyPDF2.PdfReader(pdfFile)
+    pageObj = pdfReader.pages[1]
+    rawText = pageObj.extract_text()
     pos_Heim = rawText.find('Heim: ')
     pos_Ende = rawText.find('Nr.Name')
     name = rawText[pos_Heim + 6:pos_Ende]
-    pageOne = pdfReader.getPage(0)
-    p1 = pageOne.extractText()
+    pageOne = pdfReader.pages[0]
+    p1 = pageOne.extract_text()
     start = p1.find('Spielklasse') + 11
     ende = p1.find('Spiel/Datum')
     spielklasse = p1[start:ende]
@@ -178,9 +178,11 @@ def fileRead(file):
 def fileSchreiben():
     global Manschaften, Manschaften_kurz
     heim = easygui.choicebox('Heimmannschaft?', title=title, choices=list(Manschaften_kurz.keys()))
+    if akt_manschaft == "zurück": return
     kurzHeim = heim
     heim = Manschaften_kurz[heim]
     gast = easygui.choicebox('Gastmannschaft?', title=title, choices=list(Manschaften_kurz.keys()))
+    if akt_manschaft == "zurück": return
     gast = Manschaften_kurz[gast]
     heimManschaft = Manschaften[heim]
     gastManschaft = Manschaften[gast]
@@ -244,7 +246,8 @@ while True:
         break
     elif cmd == 'Kürzel ändern':
         akt_manschaft = easygui.choicebox('Von welcher Mannschaft soll das kürzel geändert werden?', title=title,
-                                          choices=list(Manschaften_kurz.keys()))
+                                          choices=list(Manschaften_kurz.keys()) + ["zurück"])
+        if akt_manschaft == "zurück": continue
         k = akt_manschaft
         akt_manschaft = Manschaften_kurz[akt_manschaft]
         new_kuerzel = easygui.enterbox('Neues Kürzel?', title=title)
@@ -277,7 +280,8 @@ while True:
 
     elif cmd == 'Mannschaft löschen':
         akt_manschaft = easygui.choicebox('Welche Mannschaft soll gelöscht werden?', title=title,
-                                          choices=list(Manschaften_kurz.keys()))
+                                          choices=list(Manschaften_kurz.keys()) + ["zurück"])
+        if akt_manschaft == "zurück": continue
         kuerzel = akt_manschaft
         akt_manschaft = Manschaften_kurz[akt_manschaft]
         temp = easygui.buttonbox('Wollen sie wirklich die Mannschaft ' + str(akt_manschaft) + ' löschen?',
@@ -287,7 +291,8 @@ while True:
             del Manschaften[akt_manschaft]
     elif cmd == 'Mannschaft editieren':
         akt_manschaft = easygui.choicebox('Welche Mannschaft soll editiert werden?', title=title,
-                                          choices=list(Manschaften_kurz.keys()))
+                                          choices=list(Manschaften_kurz.keys()) + ["zurück"])
+        if akt_manschaft == "zurück": continue
         akt_manschaft = Manschaften_kurz[akt_manschaft]
         akt_manschaft = Manschaften[akt_manschaft]
         auswahl = easygui.buttonbox('Was willst du machen?', title=title,
@@ -370,7 +375,8 @@ while True:
         pickle.dump(Manschaften_kurz, open('save2.p', 'wb'))
     elif cmd == 'Spielerliste einer Mannschaft anzeigen':
         akt_manschaft = easygui.choicebox('Welche Mannschaft soll gelöscht werden?', title=title,
-                                          choices=list(Manschaften_kurz.keys()))
+                                          choices=list(Manschaften_kurz.keys()) + ["zurück"])
+        if akt_manschaft == "zurück": continue
         akt_manschaft = Manschaften_kurz[akt_manschaft]
         akt_manschaft = Manschaften[akt_manschaft]
         ausgabe = ''
@@ -406,7 +412,8 @@ while True:
                     dirs.remove(i)
             except:
                 dirs.remove(i)
-        datei = easygui.choicebox('Dateiname?', title=title, choices=dirs)
+        datei = easygui.choicebox('Dateiname?', title=title, choices=dirs + ["zurück"])
+        if datei == "zurück": continue
         if datei[-4:] != '.pdf':
             datei += '.pdf'
         fileRead(datei)
